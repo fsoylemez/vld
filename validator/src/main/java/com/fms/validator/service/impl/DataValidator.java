@@ -1,7 +1,8 @@
-package com.fms.validator.service;
+package com.fms.validator.service.impl;
 
 import com.fms.validator.constants.TradeConstans;
 import com.fms.validator.model.*;
+import com.fms.validator.service.Validator;
 import com.fms.validator.util.DateUtils;
 
 import java.time.DayOfWeek;
@@ -10,12 +11,12 @@ import java.time.ZoneId;
 import java.util.Currency;
 import java.util.Date;
 
-public class DataValidator {
+
+public class DataValidator implements Validator{
 	
 
-	public ValidationResult validate(TradeModel tradeModel){
+	public void validate(TradeModel tradeModel,ValidationResponse response,int tradeIndex){
 		ValidationResult validationResult = new ValidationResult();
-		if(tradeModel!=null) {
 			try {
 
 				Date valueDate = DateUtils.toDate(tradeModel.getValueDate());
@@ -31,9 +32,7 @@ public class DataValidator {
 						validationResult.addValidationFault(new ValidationFault("ValueDate can not be before tradeDate."));
 					}
 				}
-				if(tradeModel.getValueDate()!=null && !tradeModel.getValueDate().equals("") && valueDate==null){
-					validationResult.addValidationFault(new ValidationFault("ValueDate can not be parsed."));
-				}
+
 				//check whether counterparty is valid
 				try {
 					Customer customer = Customer.valueOf(tradeModel.getCustomer());
@@ -74,19 +73,12 @@ public class DataValidator {
 				validationResult.addValidationFault(new ValidationFault("Invalid trade data.Message:"+e.getMessage()));
 			}
 
-		}
-		else{
-			validationResult.addValidationFault(new ValidationFault("Invalid trade data."));
-		}
+		validationResult.setDataIndex(tradeIndex);
+
 		if(validationResult.getValidationFaults().size()>0){
-			validationResult.setResponseStatus(ValidationStatus.FAIL);
+			response.addValidationResult(validationResult);
 		}
-		else{
-			validationResult.setResponseStatus(ValidationStatus.SUCCESS);
-
-		}
-
-		return validationResult;
+	//	return validationResult;
 	}
 	
 	private void validateSpot(TradeModel tradeModel,ValidationResult validationResult){
@@ -119,17 +111,8 @@ public class DataValidator {
 		}
 
 		Date excerciseDate = DateUtils.toDate(tradeModel.getExcerciseStartDate());
-		if(tradeModel.getExcerciseStartDate()!=null && !tradeModel.getExcerciseStartDate().equals("") && excerciseDate==null){
-			validationResult.addValidationFault(new ValidationFault("excercise date can not be parsed."));
-		}
 		Date tradeDate = DateUtils.toDate(tradeModel.getTradeDate());
-		if(tradeModel.getTradeDate()!=null && !tradeModel.getTradeDate().equals("") && tradeDate==null){
-			validationResult.addValidationFault(new ValidationFault("trade date can not be parsed."));
-		}
 		Date expiryDate = DateUtils.toDate(tradeModel.getExpiryDate());
-		if(tradeModel.getExpiryDate()!=null && !tradeModel.getExpiryDate().equals("") && expiryDate==null){
-			validationResult.addValidationFault(new ValidationFault("expiry date can not be parsed."));
-		}
 
 		//validate excerciseDate against type
 		if(tradeModel.getType().equals(Style.AMERICAN.toString())){
@@ -142,13 +125,8 @@ public class DataValidator {
 			}
 		}
 		Date deliveryDate = DateUtils.toDate(tradeModel.getDeliveryDate());
-		if(tradeModel.getDeliveryDate()!=null && !tradeModel.getDeliveryDate().equals("") && deliveryDate==null){
-			validationResult.addValidationFault(new ValidationFault("deliveryDate can not be parsed."));
-		}
 		Date premiumDate = DateUtils.toDate(tradeModel.getPremiumDate());
-		if(tradeModel.getPremiumDate()!=null && !tradeModel.getPremiumDate().equals("") && premiumDate==null){
-			validationResult.addValidationFault(new ValidationFault("premiumDate can not be parsed."));
-		}
+
 		if(expiryDate!=null && deliveryDate!=null && premiumDate!=null) {
 			// validate premium date and expiry date
 			if (!(expiryDate.before(deliveryDate) &&

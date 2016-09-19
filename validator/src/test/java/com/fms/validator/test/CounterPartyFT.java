@@ -3,7 +3,6 @@ package com.fms.validator.test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fms.validator.model.TradeModel;
-import com.fms.validator.service.DataValidator;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -35,8 +34,8 @@ public class CounterPartyFT {
                 TradeModel tradeModel = objectMapper.treeToValue(jsonNode,TradeModel.class);
             }
 
-            DataValidator dv = new DataValidator();
-            System.out.println(dv.validate(tradeModels[0]));
+//            DataValidator dv = new DataValidator();
+//            System.out.println(dv.validate(tradeModels[0]));
 
         } catch (Exception e) {
             e.printStackTrace();

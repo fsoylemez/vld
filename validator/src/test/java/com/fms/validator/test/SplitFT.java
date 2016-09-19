@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fms.validator.model.*;
-import com.fms.validator.service.DataValidator;
+import com.fms.validator.service.Validator;
+import com.fms.validator.service.impl.DataValidator;
+import com.fms.validator.service.impl.JsonValidator;
+import com.fms.validator.service.impl.TypeValidator;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +18,13 @@ import java.nio.file.Paths;
 
 public class SplitFT {
 
-	static DataValidator dataValidator = new DataValidator();
-
 	public static void main(String[] args) throws IOException {
 		ValidationResponse response = new ValidationResponse();
+
+		Validator[] validators = new Validator[3];
+		validators[0] = new JsonValidator();
+		validators[1] = new TypeValidator();
+		validators[2] = new DataValidator();
 		
 		File resourcesDirectory = new File("src/test/resources/exampleData/tradeData1.json");
 		
@@ -35,27 +41,33 @@ public class SplitFT {
 		  throw new IllegalStateException("Expected an array");
 		}
 		while(parser.nextToken() == JsonToken.START_OBJECT) {
-		  // read everything from this START_OBJECT to the matching END_OBJECT
-		  // and return it as a tree model ObjectNode
+
 		  ObjectNode node = objectMapper.readTree(parser);
 			try {
 				TradeModel tradeModel = objectMapper.treeToValue(node, TradeModel.class);
-				ValidationResult result = dataValidator.validate(tradeModel);
-				result.setTradeIndex(tradeIndex);
-				if (result.getResponseStatus() == ValidationStatus.FAIL) {
+
+				if(tradeModel!=null) {
+					for (Validator v : validators) {
+						v.validate(tradeModel, response, tradeIndex);
+					}
+				}
+				else{
+					ValidationResult result = new ValidationResult();
+					result.addValidationFault(new ValidationFault("Invalid trade data."));
+					result.setDataIndex(tradeIndex);
 					response.addValidationResult(result);
 				}
 			}catch(UnrecognizedPropertyException e){
 				ValidationResult result = new ValidationResult();
 				int index = e.getMessage().indexOf("(");
 				result.addValidationFault(new ValidationFault(e.getMessage().substring(0,index)));
-				result.setResponseStatus(ValidationStatus.FAIL);
+				result.setDataIndex(tradeIndex);
 				response.addValidationResult(result);
 			}
 
 			tradeIndex++;
 		}
-		System.out.println(response.getValidationResults().size());
+//		System.out.println(response.getValidationResults().size());
 
 		parser.close();
 

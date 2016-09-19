@@ -24,11 +24,11 @@ public class TradeModel
 
     private String amount2;
 
-    private double amount1;
+    private String amount1;
 
     private String tradeDate;
 
-    private double rate;
+    private String rate;
 
     private String style;
 
@@ -144,12 +144,12 @@ public class TradeModel
         this.amount2 = amount2;
     }
 
-    public double getAmount1 ()
+    public String getAmount1 ()
     {
         return amount1;
     }
 
-    public void setAmount1 (double amount1)
+    public void setAmount1 (String amount1)
     {
         this.amount1 = amount1;
     }
@@ -164,12 +164,12 @@ public class TradeModel
         this.tradeDate = tradeDate;
     }
 
-    public double getRate ()
+    public String getRate ()
     {
         return rate;
     }
 
-    public void setRate (double rate)
+    public void setRate (String rate)
     {
         this.rate = rate;
     }

@@ -8,26 +8,15 @@ import java.util.List;
  */
 public class ValidationResult {
 
-    private ValidationStatus responseStatus;
-
-    private int tradeIndex;
+    private int dataIndex;
 
     private List<ValidationFault> validationFaults;
 
     public ValidationResult(ValidationStatus responseStatus, List<ValidationFault> validationFaults){
-        this.responseStatus = responseStatus;
         this.validationFaults = validationFaults;
     }
 
     public ValidationResult(){}
-
-    public ValidationStatus getResponseStatus() {
-        return responseStatus;
-    }
-
-    public void setResponseStatus(ValidationStatus responseStatus) {
-        this.responseStatus = responseStatus;
-    }
 
     public List<ValidationFault> getValidationFaults() {
         if(validationFaults==null)
@@ -43,11 +32,11 @@ public class ValidationResult {
         getValidationFaults().add(fault);
     }
 
-    public int getTradeIndex() {
-        return tradeIndex;
+    public int getDataIndex() {
+        return dataIndex;
     }
 
-    public void setTradeIndex(int tradeIndex) {
-        this.tradeIndex = tradeIndex;
+    public void setDataIndex(int dataIndex) {
+        this.dataIndex = dataIndex;
     }
 }
