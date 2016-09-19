@@ -16,16 +16,20 @@ public class ServiceFactory {
 
     private static Validator jsonValidator = new JsonValidator();
 
+    private static Validator[] validators;
+
     private static ServiceFactory serviceFactory = new ServiceFactory();
 
     private ServiceFactory(){}
 
 
     public Validator[] getValidators(){
-        Validator[] validators = new Validator[3];
-        validators[0] = dataValidator;
-        validators[1] = typeValidator;
-        validators[2] = jsonValidator;
+        if(validators==null) {
+            validators = new Validator[3];
+            validators[0] = jsonValidator;
+            validators[1] = typeValidator;
+            validators[2] = dataValidator;
+        }
         return validators;
     }
 
