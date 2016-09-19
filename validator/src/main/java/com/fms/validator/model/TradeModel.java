@@ -16,7 +16,7 @@ public class TradeModel
 
     private String excerciseStartDate;
 
-    private Customer customer;
+    private String customer;
 
     private String type;
 
@@ -104,12 +104,12 @@ public class TradeModel
         this.excerciseStartDate = excerciseStartDate;
     }
 
-    public Customer getCustomer ()
+    public String getCustomer ()
     {
         return customer;
     }
 
-    public void setCustomer (Customer customer)
+    public void setCustomer (String customer)
     {
         this.customer = customer;
     }
