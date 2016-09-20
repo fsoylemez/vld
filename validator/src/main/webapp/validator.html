@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello jQuery</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <link rel="stylesheet" href="resources/css/main.css">
+</head>
+
+<body>
+<div>
+
+    <div class="validator-content">
+            <textarea class="json-data" rows="30" cols="100" >Insert Json here</textarea>
+            <button class="submit-btn">Validate</button>
+    </div>
+
+    <div class="result-content">
+        <div class="result-area">
+
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+    $('.submit-btn').on('click', function () {
+
+        var value = $('.json-data').val();
+
+        $.ajax({
+            url: "http://localhost:8080/tradeValidator/rest/validation/validate",
+            data: value,
+            method:"POST",
+            contentType: "application/json; charset=utf-8"
+        }).success(function (result) {
+            $('.result-area').empty();
+
+            if(result.validationResults.length>0){
+                $('.result-area').append("<table>");
+            for(var i=0;i<result.validationResults.length;i++) {
+                var valResult = result.validationResults[i];
+                $('.result-area').append("<tr>");
+                $('.result-area').append("<td>DataIndex :"+valResult.dataIndex+"</td>");
+                $('.result-area').append("</tr><tr>");
+                for(var k=0;k<valResult.validationFaults.length;k++){
+                            var fault = valResult.validationFaults[k];
+                         $('.result-area').append("<td>"+fault.message+"</td>");
+                    }
+                $('.result-area').append("</tr>");
+            }
+                $('.result-area').append("</table>");
+            }
+
+        });
+    });
+
+</script>
+
+</body>
+</html>
