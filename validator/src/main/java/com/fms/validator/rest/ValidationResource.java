@@ -12,12 +12,14 @@ import com.fms.validator.model.ValidationFault;
 import com.fms.validator.model.ValidationResponse;
 import com.fms.validator.model.ValidationResult;
 import com.fms.validator.service.Validator;
+import com.fms.validator.util.JsonUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * Created by fatih.soylemez on 9/19/2016.
@@ -33,48 +35,64 @@ public class ValidationResource {
 
         ValidationResponse response = new ValidationResponse();
 
-        try {
+        //validate json string
+        if (!JsonUtils.isValid(trades)) {
+            response.addValidationResult(createValidationResult("Invalid json.",0));
+            return response;
+        }
 
+        try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonParser parser = objectMapper.getFactory().createParser(trades);
 
             int tradeIndex = 0;
-            if (parser.nextToken() != JsonToken.START_ARRAY) {
-                throw new IllegalStateException("Expected an array");
+            JsonToken token = parser.nextToken();
+            if (token == JsonToken.START_OBJECT) {
+                doValidation(objectMapper,parser,response,tradeIndex);
             }
+            else{
             while (parser.nextToken() == JsonToken.START_OBJECT) {
 
-                ObjectNode node = objectMapper.readTree(parser);
-                try {
-                    TradeModel tradeModel = objectMapper.treeToValue(node, TradeModel.class);
-
-                    if (tradeModel != null) {
-                        for (Validator v : ServiceFactory.getInstance().getValidators()) {
-                            v.validate(tradeModel, response, tradeIndex);
-                        }
-                    } else {
-                        ValidationResult result = new ValidationResult();
-                        result.addValidationFault(new ValidationFault("Invalid trade data."));
-                        result.setDataIndex(tradeIndex);
-                        response.addValidationResult(result);
-                    }
-                } catch (UnrecognizedPropertyException e) {
-                    ValidationResult result = new ValidationResult();
-                    int index = e.getMessage().indexOf("(");
-                    result.addValidationFault(new ValidationFault(e.getMessage().substring(0, index)));
-                    result.setDataIndex(tradeIndex);
-                    response.addValidationResult(result);
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                }
+                doValidation(objectMapper,parser,response,tradeIndex);
 
                 tradeIndex++;
             }
-
+        }
             parser.close();
         }catch (Exception e){
             e.printStackTrace();
         }
         return response;
+    }
+
+    public void doValidation(ObjectMapper objectMapper,JsonParser parser,ValidationResponse response,int tradeIndex){
+        try {
+            ObjectNode node = objectMapper.readTree(parser);
+
+            TradeModel tradeModel = objectMapper.treeToValue(node, TradeModel.class);
+
+            if (tradeModel != null) {
+                for (Validator v : ServiceFactory.getInstance().getValidators()) {
+                    v.validate(tradeModel, response, tradeIndex);
+                }
+            } else {
+                response.addValidationResult(createValidationResult("Invalid trade data.", tradeIndex));
+            }
+        } catch (UnrecognizedPropertyException e) {
+            int index = e.getMessage().indexOf("(");
+            response.addValidationResult(createValidationResult(e.getMessage().substring(0, index), tradeIndex));
+        } catch (JsonProcessingException e) {
+            int index = e.getMessage().indexOf(")");
+            response.addValidationResult(createValidationResult(e.getMessage().substring(0, index), tradeIndex));
+        } catch (IOException e){
+            response.addValidationResult(createValidationResult(e.getMessage(), tradeIndex));
+        }
+    }
+
+    public ValidationResult createValidationResult(String message,int tradeIndex){
+        ValidationResult result = new ValidationResult();
+        result.addValidationFault(new ValidationFault(message));
+        result.setDataIndex(tradeIndex);
+        return result;
     }
 }
