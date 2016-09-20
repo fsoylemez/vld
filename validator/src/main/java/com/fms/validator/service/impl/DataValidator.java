@@ -40,8 +40,12 @@ public class DataValidator implements Validator{
 				} catch (IllegalArgumentException ex) {
 					validationResult.addValidationFault(new ValidationFault("Counterparty is not supported."));
 				}
-				//check whether currency is in iso 4217 currencies
-				if (tradeModel.getPayCcy() != null && !tradeModel.getPayCcy().equals("") && !Currency.getAvailableCurrencies().contains(Currency.getInstance(tradeModel.getPayCcy()))) {
+				try {
+					//check whether currency is in iso 4217 currencies
+					if (tradeModel.getPayCcy() != null && !tradeModel.getPayCcy().equals("") && !Currency.getAvailableCurrencies().contains(Currency.getInstance(tradeModel.getPayCcy()))) {
+						validationResult.addValidationFault(new ValidationFault("Currency is not in ISO 4217."));
+					}
+				}catch (IllegalArgumentException e){//can not get currency instance
 					validationResult.addValidationFault(new ValidationFault("Currency is not in ISO 4217."));
 				}
 

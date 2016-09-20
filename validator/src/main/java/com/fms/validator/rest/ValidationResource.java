@@ -14,11 +14,9 @@ import com.fms.validator.model.ValidationResult;
 import com.fms.validator.service.Validator;
 import com.fms.validator.util.JsonUtils;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 /**
@@ -27,42 +25,55 @@ import java.io.IOException;
 @Path("/validation")
 public class ValidationResource {
 
+    private static boolean shutFlag = false;
+
+    @Path("shutdown")
+    @GET
+    public Response validateTradeData() {
+        shutFlag = true;
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
     @Path("validate")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public ValidationResponse validateTradeData(final String trades) {
 
-        ValidationResponse response = new ValidationResponse();
+        if(!shutFlag) {
 
-        //validate json string
-        if (!JsonUtils.isValid(trades)) {
-            response.addValidationResult(createValidationResult("Invalid json.",0));
+            ValidationResponse response = new ValidationResponse();
+
+            //validate json string
+            if (!JsonUtils.isValid(trades)) {
+                response.addValidationResult(createValidationResult("Invalid json.", 0));
+                return response;
+            }
+
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonParser parser = objectMapper.getFactory().createParser(trades);
+
+                int tradeIndex = 0;
+                JsonToken token = parser.nextToken();
+                if (token == JsonToken.START_OBJECT) {
+                    doValidation(objectMapper, parser, response, tradeIndex);
+                } else {
+                    while (parser.nextToken() == JsonToken.START_OBJECT) {
+
+                        doValidation(objectMapper, parser, response, tradeIndex);
+
+                        tradeIndex++;
+                    }
+                }
+                parser.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return response;
         }
-
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonParser parser = objectMapper.getFactory().createParser(trades);
-
-            int tradeIndex = 0;
-            JsonToken token = parser.nextToken();
-            if (token == JsonToken.START_OBJECT) {
-                doValidation(objectMapper,parser,response,tradeIndex);
-            }
-            else{
-            while (parser.nextToken() == JsonToken.START_OBJECT) {
-
-                doValidation(objectMapper,parser,response,tradeIndex);
-
-                tradeIndex++;
-            }
-        }
-            parser.close();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return response;
+     //       return Response.status(500).entity(response).build();
+        return null;
     }
 
     public void doValidation(ObjectMapper objectMapper,JsonParser parser,ValidationResponse response,int tradeIndex){
